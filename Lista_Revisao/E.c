@@ -21,6 +21,10 @@ int main (){
 
     scanf("%d %d", &LinhaAtual, &ColunaAtual);
 
+    while (scanf("%c", comando) != EOF){
+        // Lógica para subir e descer linhas aqui
+    }
+
 
     printf("linha: %d coluna: %d\n", LinhaAtual, ColunaAtual);
     printf("%s", linhas[0]);
