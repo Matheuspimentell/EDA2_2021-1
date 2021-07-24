@@ -15,7 +15,7 @@ int main (){
 
     while (i < TotalLinhas){
         linhas[i] = malloc(1000*sizeof(char));
-        fgets(linhas[i], 1000, stdin);
+        scanf(" %[^\n]", linhas[i]);
         i++;
     }
 
@@ -27,8 +27,8 @@ int main (){
 
 
     printf("linha: %d coluna: %d\n", LinhaAtual, ColunaAtual);
-    printf("%s", linhas[0]);
-    printf("%s", linhas[1]);
+    printf("%s\n", linhas[0]);
+    printf("%s\n\n", linhas[1]);
 
     free(linhas);
     return 0;
