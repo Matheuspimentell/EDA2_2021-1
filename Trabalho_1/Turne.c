@@ -70,9 +70,6 @@ int main (){
     while (scanf("%s", input) != EOF){
         primeiro = enfileira(primeiro, input);
     }
-
-    // teste = input[strlen(input)-1] - 32;
-
     printf("\n%s\n", primeiro->cidade);
     imprimeOrdem(primeiro);   
 
