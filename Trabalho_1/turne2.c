@@ -64,7 +64,7 @@ int main (){
     }
 
     if(controle.ini != NULL){
-        printf("\n%s\n", controle.ini->cidade);
+        printf("%s\n", controle.ini->cidade);
         imprimeOrdenado(controle);
     }
     

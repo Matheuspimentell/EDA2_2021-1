@@ -72,7 +72,7 @@ int main (){
     }
     printf("\n%s\n", primeiro->cidade);
     imprimeOrdem(primeiro);   
-
+    
     free(primeiro);
     return 0;
 }
