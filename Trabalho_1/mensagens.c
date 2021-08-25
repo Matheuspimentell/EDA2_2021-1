@@ -25,28 +25,38 @@ void InitHashTable(int max){
     }
 }
 
-int HashTableSize(){
-    return N;
-}
-
 void HashTableInsert(No caracter){
     int v = index(caracter);
     int i = getHashKey(v);
-    while(!isNull(i)){
-        i = (i+1)%M;
+    if  (hashTable[i].letra != caracter.letra){
+        // while(!isNull(i)){
+        //     i = (i+1)%M;
+        // }
+        hashTable[i] = caracter;
+        N++;
+    } else {
+        return;
     }
-    hashTable[i] = caracter;
-    N++;
 }
 
 int main(){
     InitHashTable(1048577);
     No item;
-    int teste = 0;
-    scanf("%d %c", &item.indice, &item.letra);
-    HashTableInsert(item);
-    scanf("%d", &teste);
-    teste = getHashKey(teste);
-    printf("%d %c\n", hashTable[teste].indice, hashTable[teste].letra);
+    int menor, j;
+    while (scanf("%d %c", &item.indice, &item.letra)!=EOF){
+        if(N==0){
+            menor = item.indice;
+        } else {
+            if(item.indice < menor){
+                menor = item.indice;
+            }
+        }
+        HashTableInsert(item);
+    }
+    for(int i = menor; i <= menor+N ; i++){
+        j = getHashKey(i);
+        printf("%c", hashTable[j].letra);
+    }
+    printf("\n");
     return 0;
 }
