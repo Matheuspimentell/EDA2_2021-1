@@ -10,7 +10,7 @@ typedef struct No{
 static int M, N;
 static No *hashTable;
 //Como N não é primo, esotu usando o número sugerido pelo prof
-#define getHashKey(index)((618033*(unsigned)index)%M)
+#define getHashKey(index)(((unsigned)index)%M)
 //Definindo uma macro para referência do valor do índice de cada letra
 #define index(x)(x.indice)
 //Definindo macro para achar itens nulos
@@ -29,9 +29,6 @@ void HashTableInsert(No caracter){
     int v = index(caracter);
     int i = getHashKey(v);
     if  (hashTable[i].letra != caracter.letra){
-        // while(!isNull(i)){
-        //     i = (i+1)%M;
-        // }
         hashTable[i] = caracter;
         N++;
     } else {
@@ -40,7 +37,7 @@ void HashTableInsert(No caracter){
 }
 
 int main(){
-    InitHashTable(1048577);
+    InitHashTable(1048583);
     No item;
     int menor, j;
     while (scanf("%d %c", &item.indice, &item.letra)!=EOF){
@@ -53,7 +50,7 @@ int main(){
         }
         HashTableInsert(item);
     }
-    for(int i = menor; i <= menor+N ; i++){
+    for(int i = menor; i < menor+N ; i++){
         j = getHashKey(i);
         printf("%c", hashTable[j].letra);
     }
