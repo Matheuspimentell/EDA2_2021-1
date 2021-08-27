@@ -2,10 +2,9 @@
 #include <stdlib.h>
 
 //Definir um vetor de 100 elementos com todos os elementos iguais a nulo
-static int *placas, M, N;
-void InitVetPlacas(int max){
+static int *placas, M = 100, N;
+void InitVetPlacas(){
     N = 0;
-    M = max;
     placas = malloc(M*sizeof(int));
     /*Preencher todos os elementos com 10⁷ + 1, porque assim, garantimos que nenhum elemento
      novo estará à direita*/
@@ -42,12 +41,32 @@ void shellsort(int *v, int l, int r){
     }
 }
 
-void insere(){
-    
+void insere(int placa){
+    if(placa < placas[M-1]){
+        placas[M-1] = placa;
+        N++;
+        shellsort(placas, 0, 99);
+    }
 }
 
 int main (){
-    InitVetPlacas(100);
+    InitVetPlacas();
     int opcao, num;
+    while(scanf("%d %d", &opcao, &num) != EOF ){
+        if(opcao == 1){
+            insere(num);
+        } else if(opcao == 2){
+            if(num > N){
+                num = N;
+            }
+            for(int i = 0; i < num; i++){
+                if(i == num-1){
+                    printf("%d\n", placas[i]);
+                } else {
+                    printf("%d ", placas[i]);
+                }
+            }
+        }
+    }
     return 0;
 }
