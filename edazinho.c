@@ -6,12 +6,16 @@
 
 //Variáveis fixadas no início do jogo
 long long int LINHA_INCIAL, COLUNA_INICIAL, PONTOS_INCIAL; //long long int suporta dados entre -2^63 e 2^63 - 1
-unsigned int TURNOS; // unsigned int para armazenar dado da quantidade de turnos
-long MAX = pow(2,21), MIN = -(pow(2,21)); // MAX = 2^21, MIN = -2^21
+unsigned int TURNOS, tamanhoHash; // unsigned int para armazenar dado da quantidade de turnos
+long MAX = ((pow(2,21))-1), MIN = -(pow(2,21)); // MAX = 2^21, MIN = -2^21
 
-//Para gerar números aleatórios entre max e min
-#define geraPontuacao(max, min) \
-    ((rand()%(max-min))+min); 
+//Para gerar números aleatórios entre MAX e MIN
+#define geraPontuacao() \
+    ((rand()%(MAX-MIN))+MIN);
+
+//Gerar código hash para saber posições disponíveis para sondagem
+#define geraHash(linha, coluna) \
+    (abs((linha+coluna)%tamanhoHash));
 
 //Lista simplemente encadeada com todos os edazinhos
 typedef struct edazinhos{
@@ -21,7 +25,19 @@ typedef struct edazinhos{
     struct edazinhos *prox;
 }edazinhos;
 
-//Implementar fila de prioridade para as células sondadas com base na pontuação
+//Implementar fila de prioridade para as células sondadas com base na pontuação (Binary heap)
+typedef struct filaDominacao{
+    //Linha e coluna da célula sondada
+    long long int linha, coluna;
+    //Ponteiro para a próxima célula já sondada
+    struct filaDominacao *prox;
+}filaDominacao;
+
+//Lógica para sondar uma posição
+edazinhos *sondar(edazinhos *listaEdazinhos, long long int Linha, long long int Coluna){
+    //Checar posições válidas para sondagem
+    return listaEdazinhos;
+}
 
 //Lógica para dominar uma posição
 edazinhos *dominar(edazinhos *listaEdazinhos, long long int Linha, long long int Coluna){
@@ -49,38 +65,44 @@ edazinhos *dominar(edazinhos *listaEdazinhos, long long int Linha, long long int
 
 //Implementação do jogador: Reagir às entradas do árbitro
 int main(){
+    
+    scanf("%u", &TURNOS);    
 
-    //Variável que armazena a pontuação total
-    double pontuacaoTotal = 0;
+    tamanhoHash = (9+(5*(TURNOS-1)));
 
-    //Ler 3 long int e 1 unsigned int
-    scanf("%lld %lld %lld %u", &LINHA_INCIAL, &COLUNA_INICIAL, &PONTOS_INCIAL, &TURNOS);
+    if(tamanhoHash%2 == 0){
+        tamanhoHash++;
+    }
 
-    //Cria a lista de edazinhos
-    edazinhos *listaEdazinhos;
-    //Aloca a memória para o 1° edazinho e insere ele na lista
-    listaEdazinhos = (edazinhos *) malloc(sizeof(edazinhos));
-    listaEdazinhos->linha = LINHA_INCIAL;
-    listaEdazinhos->coluna = COLUNA_INICIAL;
-    listaEdazinhos->prox = NULL;
+    long long int linhaI = geraPontuacao();
+    long long int colunaI = geraPontuacao();
 
-    //Incrementa a pontuação total
-    pontuacaoTotal += PONTOS_INCIAL;
+    long long int linhaJ = linhaI;
+    long long int colunaJ = colunaI;
 
-    /*Formatos de saídas do árbitro: ("sondagem %lld %lld %lf", linha, coluna, pontuacao)
-                                     ("dominacao %lf", pontuacao)
-    */
+    int i = 1;
+    while(i <= 30){
+        printf("linha:%lld coluna:%lld\n", linhaI, colunaI);
+        unsigned int teste = geraHash(linhaI, colunaI);
+        printf("hashKey:%u\n\n", teste);
+        linhaI++;
+        colunaI++;
+        i++;
+    }
 
-    /*Formatos de saídas do jogador: ("sondar %lld %lld", linha, coluna)
-                                     ("dominar %lld %lld", linha, coluna)
-    */
 
-    /*a posição a ser sondada deve estar no seguinte padrão:
-        (linhaEdazinho-1,colunaEdazinho-1) <= (linha_a_ser_sondada, coluna_a_ser_sondada) <= ((linhaEdazinho-1,colunaEdazinho-1)) && 
-        (linha_a_ser_sondada, coluna_a_ser_sondada) != (linhaEdazinho,colunaEdazinho)*/
+    printf("===================================================\n");
 
-    //Libera a memória usada para a lista de edazinhos
-    free(listaEdazinhos);
+    int j = 1;
+    while(j <= 30){
+        printf("linha:%lld coluna:%lld\n", linhaJ, colunaJ);
+        unsigned int teste = geraHash(linhaJ, colunaJ);
+        printf("hashKey:%u\n\n", teste);
+        linhaJ--;
+        colunaJ--;
+        j++;
+    }
+
     return 0;
 
 }
