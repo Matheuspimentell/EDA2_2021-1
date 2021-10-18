@@ -1,138 +1,86 @@
+// O objetivo do jogo é crescer o máximo possível adiquirindo a maior quantidade de pontos.
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
-#include <string.h>
 
 //Variáveis fixadas no início do jogo
 long long int LINHA_INCIAL, COLUNA_INICIAL, PONTOS_INCIAL; //long long int suporta dados entre -2^63 e 2^63 - 1
 unsigned int TURNOS; // unsigned int para armazenar dado da quantidade de turnos
-int PONTUACAOMAXIMA = 100, PONTUACAOMINIMA = -100;
+long MAX = pow(2,21), MIN = -(pow(2,21)); // MAX = 2^21, MIN = -2^21
 
-//Cada célula contém
-typedef struct celula{
-    int recemDominada; //1 caso recém dominada, 0 caso contrário 
-    long long int pontuacao, linha, coluna; //pontuação da célula, linha e coluna.
-}celula;
+//Para gerar números aleatórios entre max e min
+#define geraPontuacao(max, min) \
+    ((rand()%(max-min))+min); 
 
-//Cada edazinho
-typedef struct edazinho{
-    long long int linha, coluna; //linha e coluna que o edazinho se encontra
-    struct edazinho *prox; //ponteiro para o próximo edazinho
-}edazinho;
+//Lista simplemente encadeada com todos os edazinhos
+typedef struct edazinhos{
+    //Linha e coluna do edazinho atual
+    long long int linha, coluna;
+    //Ponteiro para o próximo edazinho
+    struct edazinhos *prox;
+}edazinhos;
 
-//Sonda a posicao desejada e retorna a célula e seus atributos
-celula sondar(long long int linha, long long int coluna){
-    struct celula teste;
+//Implementar fila de prioridade para as células sondadas com base na pontuação
 
-    //Define os valores para a célula
-    teste.temEdazinho = 0;
-    teste.pontuacao = (rand() % (PONTUACAOMAXIMA - PONTUACAOMINIMA)) + PONTUACAOMINIMA; //Para gerar números aleatórios entre MAX e MIN
-    teste.linha = linha;
-    teste.coluna = coluna;
-
-    //Retorna a célula criada
-    return teste;
-}
-
-edazinho *dominar(edazinho listaEdazinhos){
+//Lógica para dominar uma posição
+edazinhos *dominar(edazinhos *listaEdazinhos, long long int Linha, long long int Coluna){
     
-
-    return Edazinhos
-}
-
-//Checar a validade da linha, retornar 1 caso válida, 0 caso inválida
-int linhaValida(long long int linha, edazinho *atual){
-    //CHECANDO APENAS PARA O PRIMEIRO TURNO
-    if(linha == atual->linha + 1 || linha == atual->linha - 1 || linha == atual->linha){
-        //Retorna 1 caso a linha seja válida
-        return 1;
-    } else {
-        //Retorna 0 caso a linha seja inválida
-        return 0;
+    //Inserir um edazinho no final da lista de edazinhos
+    edazinhos *aux, *novoEdazinho;
+    
+    //Aloca memória para +1 edazinho e seta a sua linha e coluna
+    novoEdazinho = (edazinhos *) malloc(sizeof(edazinhos));
+    novoEdazinho->linha = Linha;
+    novoEdazinho->coluna = Coluna;
+    novoEdazinho->prox = NULL;
+    
+    //Faz o ponteiro auxiliar ir até o final da lista de edazinhos
+    aux = listaEdazinhos;
+    while(aux->prox != NULL){
+        aux = aux->prox;
     }
-}
-//Checar a validade da coluna, retornar 1 caso válida, 0 caso inválida
-int colunaValida(long long int coluna, edazinho *atual){
-    //CHECANDO APENAS PARA O PRIMEIRO edazinho
-    if(coluna == atual->coluna + 1 || coluna == atual->coluna - 1 || coluna == atual->coluna){
-        //Retorna 1 caso a linha seja válida
-        return 1;
-    } else {
-        //Retorna 0 caso a linha seja inválida
-        return 0;
-    }
+
+    //Insere o novo edazinho no final da lista
+    aux->prox = novoEdazinho;
+
+    return listaEdazinhos;
 }
 
-// O objetivo do jogo é crescer o máximo possível adiquirindo a maior quantidade de pontos.
-
+//Implementação do jogador: Reagir às entradas do árbitro
 int main(){
 
-    long long int pontuacaoTotal = 0; //pontuacao total de edazinhos
-    unsigned int totalEdazinhos = 0; //total de edazinhos no mapa
-    struct edazinho *Edazinhos = malloc(sizeof(edazinho));
+    //Variável que armazena a pontuação total
+    double pontuacaoTotal = 0;
 
-    //Pede a linha inicial, coluna inicial, quantidades de pontos da celula inicial e a quantidade de turnos do jogo
+    //Ler 3 long int e 1 unsigned int
     scanf("%lld %lld %lld %u", &LINHA_INCIAL, &COLUNA_INICIAL, &PONTOS_INCIAL, &TURNOS);
-    
-    //Total de edazinhos aumenta
-    totalEdazinhos++;
-    //Soma a pontuação inicial
+
+    //Cria a lista de edazinhos
+    edazinhos *listaEdazinhos;
+    //Aloca a memória para o 1° edazinho e insere ele na lista
+    listaEdazinhos = (edazinhos *) malloc(sizeof(edazinhos));
+    listaEdazinhos->linha = LINHA_INCIAL;
+    listaEdazinhos->coluna = COLUNA_INICIAL;
+    listaEdazinhos->prox = NULL;
+
+    //Incrementa a pontuação total
     pontuacaoTotal += PONTOS_INCIAL;
 
-    //Cria o primeiro edazinho
-    Edazinhos->linha = LINHA_INCIAL;
-    Edazinhos->coluna = COLUNA_INICIAL;
-    Edazinhos->prox = NULL;
+    /*Formatos de saídas do árbitro: ("sondagem %lld %lld %lf", linha, coluna, pontuacao)
+                                     ("dominacao %lf", pontuacao)
+    */
 
-    //Variável de controle de turnos
-    unsigned int i = 0;
-    int jogadaInvalida = 0;
-    
-    //Game Loop
-    do{
-        //Lógica do turno
-        i++;
-        printf("Turno %d\n\n", i);
-        
-        char opcao[10];
+    /*Formatos de saídas do jogador: ("sondar %lld %lld", linha, coluna)
+                                     ("dominar %lld %lld", linha, coluna)
+    */
 
-        //Para cada edazinho
-        for(int i = 1; i <= totalEdazinhos; i++){
-            //Scan da opcao desejada
-            scanf("%s", opcao);
-        
-            //Caso seja a opcao de sondagem
-            if(strcmp(opcao, "sondar") == 0){
+    /*a posição a ser sondada deve estar no seguinte padrão:
+        (linhaEdazinho-1,colunaEdazinho-1) <= (linha_a_ser_sondada, coluna_a_ser_sondada) <= ((linhaEdazinho-1,colunaEdazinho-1)) && 
+        (linha_a_ser_sondada, coluna_a_ser_sondada) != (linhaEdazinho,colunaEdazinho)*/
 
-                long long int linha, coluna;
-
-                scanf("%lld %lld", &linha, &coluna); //Ler a linha e coluna a sondar
-
-                if(linhaValida(linha, Edazinhos) && colunaValida(coluna, Edazinhos)){
-
-                    struct celula testando = sondar(linha, coluna); //Retorna a linha e coluna sondada
-                    printf("linha: %lld\n", testando.linha);
-                    printf("coluna: %lld\n", testando.coluna);
-                    printf("pontuacao: %lld\n", testando.pontuacao);
-                    printf("Recem dominada? %d\n", testando.recemDominada);
-
-                } else {
-
-                    //Em caso de jogada inválida, zerar a pontuação
-                    printf("\nJogada invalida.\n");
-                    pontuacaoTotal = 0;
-                    jogadaInvalida = 1;
-                    break;
-                }
-            }
-        }
-        //Caso jogada inválida, acabar o jogo
-        if(jogadaInvalida){
-            break;
-        }
-        printf("\n");
-    } while (i < TURNOS);
-
-    printf("Game Over.\nPontuacao final: %lld\n", pontuacaoTotal);
+    //Libera a memória usada para a lista de edazinhos
+    free(listaEdazinhos);
     return 0;
+
 }
