@@ -24,12 +24,20 @@ typedef struct celula{
 }celula;
 
 /*
- *A implementação de uma Heap é feita por meio de vetores. Onde não se usa o índice 0 do vetor.
- *A posição dos filhos de um nó da HEAP é dada por: 2*k e 2*k+1, respectivamente. Onde k é a posição do nó pai
- *Igualmente, pode-se encontrar a posição do nó pai com o resultado inteiro de k/2. Onde k é a posição do nó filho
- *A inserção deve começar pelo índice 1
- *Usar a implementação de uma MAXHeap
- *Utilizando o índice 0 para a última posição removida
+ * Testar uma implementação de "balcklist" de posições
+ * Cada posição que for sondada com sucesso deve ser adicionada à blacklist
+ * Caso um edazinho encontre uma posição da blacklist, ele passa o turno
+ * Caso não encontre, sonda normalmente
+ * A "blacklist" pode ser implementada por meio de uma tabela hash
+ **/
+
+/*
+ * A implementação de uma Heap é feita por meio de vetores. Onde não se usa o índice 0 do vetor.
+ * A posição dos filhos de um nó da HEAP é dada por: 2*k e 2*k+1, respectivamente. Onde k é a posição do nó pai
+ * Igualmente, pode-se encontrar a posição do nó pai com o resultado inteiro de k/2. Onde k é a posição do nó filho
+ * A inserção deve começar pelo índice 1
+ * Usar a implementação de uma MAXHeap
+ * Utilizando o índice 0 para a última posição removida
  * */
 celula heap[301];
 int _sizeHeap = 0;
@@ -49,8 +57,8 @@ void HeapSwap(int indexA, int indexB){
     heap[indexB] = aux;
 }
 
-//Reorganiza a Heap
-void heapify(int index){
+//Reorganiza a Heap "para baixo"
+void heapifyDown(int index){
 
     //Filho da direita e da esquerda do nó "i"
     int Esquerda = FilhoEsquerda(index);
@@ -70,7 +78,20 @@ void heapify(int index){
     //Caso exista algum numero maior que o index, trocar o maior deles de posição com o index
     if(i != index){
         HeapSwap(index, i);
-        heapify(i);
+        heapifyDown(i);
+    }
+}
+
+//Reorganiza a Heap "para cima"
+void heapifyUp(int index){
+
+    //Pai do nó "i"
+    int pai = Pai(index);
+
+    //Caso não seja fora do tamanho da heap e o pai seja menor que o index
+    if(pai >= 1 && heap[pai].pontos < heap[index].pontos){
+        HeapSwap(pai, index);
+        heapifyUp(pai);
     }
 }
 
@@ -87,11 +108,7 @@ void insertHeap(celula nova){
     int i = _sizeHeap;
     heap[i] = nova;
 
-    //Checar e consertar a Heap "pra cima", caso necessário
-    while(i > 1 && heap[Pai(i)].pontos < heap[i].pontos){
-        HeapSwap(Pai(i), i);
-        i = Pai(i);
-    }
+    heapifyUp(i);
 }
 
 //Remover o maior elemento
@@ -109,7 +126,7 @@ celula removeMAX(){
     _sizeHeap--;
 
     //Reorganizar a heap
-    heapify(1);
+    heapifyDown(1);
 
     return max;
 }
@@ -187,7 +204,7 @@ void sondar(edazinhos *playerList){
     return;
 }
 
-void dominar(edazinhos *playerList){
+edazinhos *dominar(edazinhos *playerList){
     
     //Remover o maior elemento da lista
     celula aDominar = removeMAX();
@@ -201,15 +218,6 @@ void dominar(edazinhos *playerList){
     //Espera a saida do arbitro
     scanf("%s %lld", dominacao, &pontuacao);
 
-    //Ponteiro auxiliar para a lista de edazinhos
-    edazinhos *aux;
-    aux = playerList;
-
-    //Avançar até a ultima posição
-    while(aux->prox != NULL){
-        aux = aux->prox;
-    }
-
     //Criar o novo edazinho
     struct edazinhos *novo;
     novo = (edazinhos *) malloc(sizeof(edazinhos));
@@ -217,12 +225,12 @@ void dominar(edazinhos *playerList){
     novo->coluna = aDominar.coluna;
     novo->posicoesSondadas = 0;
     novo->prox = NULL;
-    novo->ant = aux;
+    novo->ant = NULL;
     totalEdazinhos++;
     totalPontos+=pontuacao;
 
-    //Adicionar na lista
-    aux->prox = novo;
+    //Retorna o novo edazinho
+    return novo;
 }
 
 //Implementação do jogador: Reagir às entradas do árbitro
@@ -268,11 +276,12 @@ int main(){
 
         //ponteiro auxiliar para a lista de edazinhos e suas posições
         struct edazinhos *aux = listaEdazinhos;
+        struct edazinhos *novo = NULL;
 
         //Caso existam elementos na heap
         if(_sizeHeap > 0){
             printf("pode dominar!\n");
-            dominar(aux);
+            novo = dominar(aux);
             int i = 1;
             while(i <= _sizeHeap){
                 printf("l:%lld, c:%lld, p:%lld\n", heap[i].linha, heap[i].coluna, heap[i].pontos);
@@ -286,6 +295,18 @@ int main(){
         //Acabando o turno, invoca o comando "fimturno"
         printf("fimturno\n");
         fflush(stdout);
+
+        //Se houver edazinho novo, adiciona à lista
+        if(novo != NULL){
+            aux = listaEdazinhos;
+            while(aux->prox!=NULL){
+                aux=aux->prox;
+            }
+            aux->prox = novo;
+            novo->ant = aux;
+        }
+
+        //Incrementa o turno
         i++;
     }while(i < TURNOS);
 
