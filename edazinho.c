@@ -8,12 +8,14 @@
 //Variáveis fixadas no início do jogo
 long long int LINHA_INCIAL, COLUNA_INICIAL, PONTOS_INCIAL; //long long int suporta dados entre -2^63 e 2^63 - 1
 unsigned int TURNOS; // unsigned int para armazenar dado da quantidade de turnos: TURNOS varia de 10 à 2^31
+//Variáveis que armazenam o total de pontos obtidos e de edazinhos em campo
+long long int totalPontos, totalEdazinhos;
 
-//Lista simplemente encadeada com todos os edazinhos
+//Lista duplamente encadeada com todos os edazinhos
 typedef struct edazinhos{
     long long int linha, coluna; //Linha e coluna do edazinho atual
     int posicoesSondadas; // Varia entre 0 e 8. 8 = Todas as posições em volta foram sondadas | 0 = nenhuma posição foi sondada
-    struct edazinhos *prox; //Ponteiro para o próximo edazinho
+    struct edazinhos *prox, *ant; //Ponteiro para o próximo edazinho
 }edazinhos;
 
 //Cada célula do jogo
@@ -22,7 +24,7 @@ typedef struct celula{
 }celula;
 
 /*
- *A implementação de uma HEAP é feita por meio de vetores. Onde não se usa o índice 0 do vetor.
+ *A implementação de uma Heap é feita por meio de vetores. Onde não se usa o índice 0 do vetor.
  *A posição dos filhos de um nó da HEAP é dada por: 2*k e 2*k+1, respectivamente. Onde k é a posição do nó pai
  *Igualmente, pode-se encontrar a posição do nó pai com o resultado inteiro de k/2. Onde k é a posição do nó filho
  *A inserção deve começar pelo índice 1
@@ -40,13 +42,39 @@ int FilhoEsquerda(int index){return (index*2);}
 int FilhoDireita(int index){return ((index*2)+1);}
 
 //Troca simples entre 2 elementos da heap
-void HeapSwap(int indexPai, int indexFilho){
+void HeapSwap(int indexA, int indexB){
     celula aux;
-    aux = heap[indexPai];
-    heap[indexPai] = heap[indexFilho];
-    heap[indexFilho] = aux;
+    aux = heap[indexA];
+    heap[indexA] = heap[indexB];
+    heap[indexB] = aux;
 }
 
+//Reorganiza a Heap
+void heapify(int index){
+
+    //Filho da direita e da esquerda do nó "i"
+    int Esquerda = FilhoEsquerda(index);
+    int Direita = FilhoDireita(index);
+
+    //Assumindo que o index seja o maior elemento
+    int i = index;
+
+    //Caso não seja fora do tamanho da heap e o filho da esquerda seja maior que o index
+    if(Esquerda < _sizeHeap && heap[Esquerda].pontos > heap[index].pontos){
+        i = Esquerda;
+    }
+    //Caso não seja fora do tamanho da heap e o filho da direita seja maior que o index
+    if(Direita < _sizeHeap && heap[Direita].pontos > heap[i].pontos){
+        i = Direita;
+    }
+    //Caso exista algum numero maior que o index, trocar o maior deles de posição com o index
+    if(i != index){
+        HeapSwap(index, i);
+        heapify(i);
+    }
+}
+
+//Inserção de um elemento na heap
 void insertHeap(celula nova){
 
     if(_sizeHeap == 300){
@@ -59,11 +87,31 @@ void insertHeap(celula nova){
     int i = _sizeHeap;
     heap[i] = nova;
 
-    //Checar e consertar a Heap, caso necessário
+    //Checar e consertar a Heap "pra cima", caso necessário
     while(i > 1 && heap[Pai(i)].pontos < heap[i].pontos){
         HeapSwap(Pai(i), i);
         i = Pai(i);
     }
+}
+
+//Remover o maior elemento
+celula removeMAX(){
+    
+    //Célula que irá conter o maior elemento da heap
+    celula max;
+    max = heap[1];
+    
+    //Pegar o último item da heap e colocar no início dela
+    if(_sizeHeap > 1){
+        int i = _sizeHeap;
+        HeapSwap(1, i);
+    }
+    _sizeHeap--;
+
+    //Reorganizar a heap
+    heapify(1);
+
+    return max;
 }
 
 //Sondar a diagonal superior direita do edazinho
@@ -139,9 +187,51 @@ void sondar(edazinhos *playerList){
     return;
 }
 
+void dominar(edazinhos *playerList){
+    
+    //Remover o maior elemento da lista
+    celula aDominar = removeMAX();
+
+    //Imprime o comando
+    printf("dominar %lld %lld\n", aDominar.linha, aDominar.coluna);
+    
+    char dominacao[10];
+    long long int pontuacao;
+
+    //Espera a saida do arbitro
+    scanf("%s %lld", dominacao, &pontuacao);
+
+    //Ponteiro auxiliar para a lista de edazinhos
+    edazinhos *aux;
+    aux = playerList;
+
+    //Avançar até a ultima posição
+    while(aux->prox != NULL){
+        aux = aux->prox;
+    }
+
+    //Criar o novo edazinho
+    struct edazinhos *novo;
+    novo = (edazinhos *) malloc(sizeof(edazinhos));
+    novo->linha = aDominar.linha;
+    novo->coluna = aDominar.coluna;
+    novo->posicoesSondadas = 0;
+    novo->prox = NULL;
+    novo->ant = aux;
+    totalEdazinhos++;
+    totalPontos+=pontuacao;
+
+    //Adicionar na lista
+    aux->prox = novo;
+}
+
 //Implementação do jogador: Reagir às entradas do árbitro
 int main(){
     
+    //Inicializa as variáveis de pontos e quantidade de edazinhos
+    totalPontos = 0;
+    totalEdazinhos = 0;
+
     //Coloca um valor qualquer na posição 0 da heap
     heap[0].linha = -1;
     heap[0].coluna = -1;
@@ -149,9 +239,6 @@ int main(){
     
     //Leitura inicial do jogo
     scanf("%lld %lld %lld %u", &LINHA_INCIAL, &COLUNA_INICIAL, &PONTOS_INCIAL, &TURNOS);
-
-    //Variáveis que armazenam o total de pontos obtidos e de edazinhos em campo
-    long long int totalPontos = 0,totalEdazinhos = 0;
     
     //Primeiro edazinho em campo
     struct edazinhos *listaEdazinhos;
@@ -160,6 +247,7 @@ int main(){
     listaEdazinhos->coluna = COLUNA_INICIAL;
     listaEdazinhos->posicoesSondadas = 0;
     listaEdazinhos->prox = NULL;
+    listaEdazinhos->ant = NULL;
     totalEdazinhos++;
     totalPontos += PONTOS_INCIAL;
     unsigned int i = 0;
@@ -178,8 +266,13 @@ int main(){
          *3° - fimturno
          * */
 
+        //ponteiro auxiliar para a lista de edazinhos e suas posições
+        struct edazinhos *aux = listaEdazinhos;
+
+        //Caso existam elementos na heap
         if(_sizeHeap > 0){
-            printf("pode dominar!\nHeap:\n");
+            printf("pode dominar!\n");
+            dominar(aux);
             int i = 1;
             while(i <= _sizeHeap){
                 printf("l:%lld, c:%lld, p:%lld\n", heap[i].linha, heap[i].coluna, heap[i].pontos);
@@ -187,8 +280,7 @@ int main(){
             }
         }
 
-        //ponteiro auxiliar para a lista de edazinhos e suas posições
-        struct edazinhos *aux = listaEdazinhos;
+        //Sondar
         sondar(aux);
 
         //Acabando o turno, invoca o comando "fimturno"
