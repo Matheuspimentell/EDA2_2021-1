@@ -18,11 +18,6 @@ typedef struct edazinhos{
     struct edazinhos *prox, *ant; //Ponteiro para o próximo edazinho
 }edazinhos;
 
-//Cada célula do jogo
-typedef struct celula{
-    long long int linha, coluna, pontos;
-}celula;
-
 /*
  * Testar uma implementação de "balcklist" de posições
  * Cada posição que for sondada com sucesso deve ser adicionada à blacklist
@@ -30,6 +25,69 @@ typedef struct celula{
  * Caso não encontre, sonda normalmente
  * A "blacklist" pode ser implementada por meio de uma tabela hash
  **/
+
+//Cada célula da blacklist
+typedef struct Blacklist{
+    long long int linha, coluna; //linha e coluna a serem armazenadas na "lista negra"
+    struct Blacklist *prox; //ponteiro para o próximo elemento, em caso de colisão
+}Blacklist;
+
+//"lista negra" de posições (Tabela Hash)
+Blacklist *blacklist[524287];
+
+//Para obter a hash key
+#define getHashKey(x, y) \
+    ((abs(x+y))%524287);
+
+//Caso a posição já tenha sido sondada, retorna 1. Caso contrário retorna 0
+int confereBlacklist(long long int linha, long long int coluna){
+    int key = getHashKey(linha, coluna);
+    
+    //Se não tiver item na blacklist na posição key
+    if(blacklist[key] == NULL){
+        blacklist[key] = (Blacklist *) malloc(sizeof(Blacklist));
+        blacklist[key]->linha = linha;
+        blacklist[key]->coluna = coluna;
+        blacklist[key]->prox = NULL;
+        return 0;
+    //Caso tenha item na blacklist, conferir
+    } else if (blacklist[key] != NULL){
+        //Caso seja o item
+        if(blacklist[key]->linha == linha && blacklist[key]->coluna == coluna){
+            return 1;
+        //Caso não seja o item
+        } else {
+            Blacklist *aux = blacklist[key];
+            //Passar por toda a lista de colisões
+            while(aux->prox!=NULL){
+                if(aux->linha == linha && aux->coluna == coluna){
+                    return 1;
+                }
+                aux = aux->prox;
+            }
+            //Caso no último elemento
+            if(aux->prox==NULL){
+                //Verificar se é o item
+                if(aux->linha == linha && aux->coluna == coluna){
+                    return 1;
+                }
+                //Adicionar um novo item
+                Blacklist *novo;
+                novo = (Blacklist *) malloc(sizeof(Blacklist));
+                novo->linha = linha;
+                novo->coluna = coluna;
+                novo->prox = NULL;
+                aux->prox = novo;
+                return 0;
+            }
+        }
+    }
+}
+
+//Cada célula do jogo
+typedef struct celula{
+    long long int linha, coluna, pontos;
+}celula;
 
 /*
  * A implementação de uma Heap é feita por meio de vetores. Onde não se usa o índice 0 do vetor.
@@ -39,15 +97,15 @@ typedef struct celula{
  * Usar a implementação de uma MAXHeap
  * Utilizando o índice 0 para a última posição removida
  * */
+
+//Heap e seu tamanho
 celula heap[301];
 int _sizeHeap = 0;
 
 //Funções essenciais da Heap
-int Pai(int index){return (index/2);}
-
-int FilhoEsquerda(int index){return (index*2);}
-
-int FilhoDireita(int index){return ((index*2)+1);}
+#define Pai(i) (i/2);
+#define FilhoEsquerda(i) (i*2);
+#define FilhoDireita(i) ((i*2)+1);
 
 //Troca simples entre 2 elementos da heap
 void HeapSwap(int indexA, int indexB){
@@ -134,12 +192,19 @@ celula removeMAX(){
 //Sondar a diagonal superior direita do edazinho
 void sondar(edazinhos *playerList){
 
+    //Caso o player atual seja nulo
+    if(playerList == NULL){
+        return;
+    }
+
     //Linha e coluna a serem sondadas
     long long int linhaSondar;
     long long int colunaSondar;
+    int sondado = 1;
 
     //Decidir qual posição sondar
     if(playerList->posicoesSondadas == 8){
+        // !!Implementar a retirada do player, caso todas as posições em volta dele forem sondadas!! (Para economia de memória)
         printf("Todas as posições em volta deste player foram sondadas.\n");
         //Avançar para o próximo player
         playerList = playerList->prox;
@@ -153,49 +218,77 @@ void sondar(edazinhos *playerList){
         //Sondar a diagonal direita superior
         linhaSondar = playerList->linha+1;
         colunaSondar = playerList->coluna+1;
+
+        //Conferir na blacklist se a posição já foi sondada
+        sondado = confereBlacklist(linhaSondar, colunaSondar);
     } else if (playerList->posicoesSondadas == 1){
         //Sondar a diagonal esquerda inferior
         linhaSondar = playerList->linha-1;
         colunaSondar = playerList->coluna-1;
+
+        //Conferir na blacklist se a posição já foi sondada
+        sondado = confereBlacklist(linhaSondar, colunaSondar);
     } else if (playerList->posicoesSondadas == 2){
         //Sondar a diagonal direita inferior
         linhaSondar = playerList->linha-1;
         colunaSondar = playerList->coluna+1;
+
+        //Conferir na blacklist se a posição já foi sondada
+        sondado = confereBlacklist(linhaSondar, colunaSondar);
     } else if (playerList->posicoesSondadas == 3){
         //Sondar a diagonal esquerda superior
         linhaSondar = playerList->linha+1;
         colunaSondar = playerList->coluna-1;
+
+        //Conferir na blacklist se a posição já foi sondada
+        sondado = confereBlacklist(linhaSondar, colunaSondar);
     } else if (playerList->posicoesSondadas == 4){
         //Sondar a posicao acima
         linhaSondar = playerList->linha+1;
         colunaSondar = playerList->coluna;
+
+        //Conferir na blacklist se a posição já foi sondada
+        sondado = confereBlacklist(linhaSondar, colunaSondar);
     } else if (playerList->posicoesSondadas == 5){
         //Sondar a posição abaixo
         linhaSondar = playerList->linha-1;
         colunaSondar = playerList->coluna+1;
+
+        //Conferir na blacklist se a posição já foi sondada
+        sondado = confereBlacklist(linhaSondar, colunaSondar);
     } else if (playerList->posicoesSondadas == 6){
         //Sondar a posição da direita
         linhaSondar = playerList->linha;
         colunaSondar = playerList->coluna+1;
+
+        //Conferir na blacklist se a posição já foi sondada
+        sondado = confereBlacklist(linhaSondar, colunaSondar);
     } else if (playerList->posicoesSondadas == 7){
         //Sondar a posição da esquerda
         linhaSondar = playerList->linha;
         colunaSondar = playerList->coluna-1;
+
+        //Conferir na blacklist se a posição já foi sondada
+        sondado = confereBlacklist(linhaSondar, colunaSondar);
     }
 
-    //Impressão do comando
-    printf("sondar %lld %lld\n", linhaSondar, colunaSondar);
+    //Só sonda se disponível para a sondagem
+    if(sondado == 0){
+        //Impressão do comando
+        printf("sondar %lld %lld\n", linhaSondar, colunaSondar);
     
-    //Esperar a resposta do árbitro
-    long long int l, c, p;
-    char sondagem[8];
-    scanf("%s %lld %lld %lld", sondagem, &l, &c, &p);
+        //Esperar a resposta do árbitro
+        long long int l, c, p;
+        char sondagem[8];
+        scanf("%s %lld %lld %lld", sondagem, &l, &c, &p);
 
-    //Inserir a nova célula na heap
-    celula nova = {l,c,p};
-    insertHeap(nova);
+        //Inserir a nova célula na heap
+        celula nova = {l,c,p};
+        insertHeap(nova);
+    }
+
+    //Avisa que já foi sondado
     playerList->posicoesSondadas++;
-
     //Chamada recursiva para a função de sondagem
     playerList = playerList->prox;
     if(playerList!=NULL){
@@ -248,6 +341,14 @@ int main(){
     //Leitura inicial do jogo
     scanf("%lld %lld %lld %u", &LINHA_INCIAL, &COLUNA_INICIAL, &PONTOS_INCIAL, &TURNOS);
     
+    //Coloca a posição inicial na blacklist de sondagens
+    int keyInicial = getHashKey(LINHA_INCIAL,COLUNA_INICIAL);
+    blacklist[keyInicial] = (Blacklist *) malloc(sizeof(Blacklist));
+    blacklist[keyInicial]->linha = LINHA_INCIAL;
+    blacklist[keyInicial]->coluna = COLUNA_INICIAL;
+    blacklist[keyInicial]->prox = NULL;
+
+
     //Primeiro edazinho em campo
     struct edazinhos *listaEdazinhos;
     listaEdazinhos = (edazinhos *) malloc(sizeof(edazinhos));
@@ -280,13 +381,7 @@ int main(){
 
         //Caso existam elementos na heap
         if(_sizeHeap > 0){
-            printf("pode dominar!\n");
             novo = dominar(aux);
-            int i = 1;
-            while(i <= _sizeHeap){
-                printf("l:%lld, c:%lld, p:%lld\n", heap[i].linha, heap[i].coluna, heap[i].pontos);
-                i++;
-            }
         }
 
         //Sondar
@@ -296,7 +391,7 @@ int main(){
         printf("fimturno\n");
         fflush(stdout);
 
-        //Se houver edazinho novo, adiciona à lista
+        //Se houver edazinho novo, adiciona à lista (Só adicionando ao final do turno)
         if(novo != NULL){
             aux = listaEdazinhos;
             while(aux->prox!=NULL){
